@@ -17,7 +17,7 @@ WHERE s.source != 'organic' AND s.medium != 'organic' AND s.campaign != 'organic
 )
 select
 visitor_id, 
-visit_date,
+to_char(visit_date, 'yyyy-mm-dd') as visit_date,
 utm_source,
 utm_medium,
 utm_campaign, 

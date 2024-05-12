@@ -18,12 +18,12 @@ WHERE s.source != 'organic' AND s.medium != 'organic' AND s.campaign != 'organic
 )
 select
 visitor_id, 
-to_char(visit_date, 'yyyy-mm-dd') as visit_date,
+visit_date,
 utm_source,
 utm_medium,
 utm_campaign, 
 lead_id,
-to_char(created_at, 'yyyy-mm-dd') as created_at, 
+created_at, 
 amount, 
 closing_reason, 
 status_id 

@@ -49,10 +49,10 @@ group by source, medium, campaign, visit_date
 )
 select
 to_char(visit_date, 'yyyy-mm-dd') as visit_date,
-visitors_count, 
 tab3.source as utm_source, 
 tab3.medium as utm_medium, 
 tab3.campaign as  utm_campaign,
+visitors_count,
 total_cost,
 leads_count, 
 purchases_count, 
@@ -65,5 +65,7 @@ tab3.campaign = tab2.utm_campaign and
 tab3.visit_date = tab2.campaign_date
 where tab3.medium != 'organic'
 order by 9 desc nulls last, 1 asc, visitors_count desc, utm_source asc, utm_medium asc, utm_campaign asc
+limit 15
+;
 limit 15
 ;

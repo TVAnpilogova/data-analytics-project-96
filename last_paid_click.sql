@@ -9,7 +9,8 @@ l.lead_id, --идентификатор лида, если пользовате�
 l.created_at, --время создания лида, NULL — если пользователь не оставил лид
 l.amount, --сумма лида (в деньгах), NULL — если пользователь не оставил лид
 l.closing_reason, --причина закрытия, NULL — если пользователь не оставил лид
-l.status_id --код причины закрытия, NULL — если пользователь не оставил лид
+l.status_id, --код причины закрытия, NULL — если пользователь не оставил лид
+row_number() over(partition by s.visitor_id order by s.visit_date desc) as number
 from sessions as s
 join leads as l on
 s.visitor_id=l.visitor_id
@@ -22,17 +23,19 @@ utm_source,
 utm_medium,
 utm_campaign, 
 lead_id,
-created_at, 
+to_char(created_at, 'yyyy-mm-dd') as created_at, 
 amount, 
 closing_reason, 
 status_id 
 from tab
+WHERE number = 1
 order by 
-amount desc,--от большего к меньшему, null записи идут последними
+amount desc nulls last,--от большего к меньшему, null записи идут последними
 visit_date asc,--от ранних к поздним
 utm_source ASC, 
 utm_medium ASC, 
 utm_campaign ASC --в алфавитном порядке
+limit 10
 ;
 
 

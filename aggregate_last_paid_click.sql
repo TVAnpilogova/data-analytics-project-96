@@ -55,7 +55,8 @@ tab3 as (
         count(
             case
                 when
-                    tab2.closing_reason = 'Успешно реализовано' or tab2.status_id = '142'
+                    tab2.closing_reason = 'Успешно реализовано'
+                    or tab2.status_id = '142'
                     then 'one'
             end
         ) as purchases_count,

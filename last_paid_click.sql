@@ -1,4 +1,4 @@
-with tab as(
+with tab as (
     select
         s.visitor_id, --уникальный человек на сайте
         s.visit_date, --время визита
@@ -10,12 +10,14 @@ with tab as(
         l.amount, --сумма лида (в деньгах)
         l.closing_reason, --причина закрытия
         l.status_id, --код причины закрытия
-        row_number() over(partition by s.visitor_id order by s.visit_date desc) as number
+        row_number() over (partition by s.visitor_id 
+        order by s.visit_date desc) as number
     from sessions as s
     join
         leads as l on
-            s.visitor_id = l.visitor_id
-    WHERE s.source != 'organic' AND s.medium != 'organic' AND s.campaign != 'organic'
+        s.visitor_id = l.visitor_id
+    WHERE s.source != 'organic' AND s.medium != 'organic'
+    AND s.campaign != 'organic'
     )
     select
     visitor_id, 
@@ -31,11 +33,11 @@ with tab as(
   from tab
   WHERE number = 1
   order by 
-  amount desc nulls last,--от большего к меньшему, null записи идут последними
-  visit_date asc,--от ранних к поздним
-  utm_source ASC, 
-  utm_medium ASC, 
-  utm_campaign ASC --в алфавитном порядке
+    amount desc nulls last,--от большего к меньшему, null записи идут последними
+    visit_date asc,--от ранних к поздним
+    utm_source ASC, 
+    utm_medium ASC, 
+    utm_campaign ASC --в алфавитном порядке
   limit 10
 ;
 

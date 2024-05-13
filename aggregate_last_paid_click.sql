@@ -51,15 +51,15 @@ tab3 as (
         tab2.utm_campaign,
         tab.total_cost,
         count(tab2.visitor_id) as visitors_count,
-        count(l.lead_id) as leads_count,
+        count(tab2.lead_id) as leads_count,
         count(
             case
                 when
-                    l.closing_reason = 'Успешно реализовано' or l.status_id = '142'
+                    tab2.closing_reason = 'Успешно реализовано' or tab2.status_id = '142'
                     then 'one'
             end
         ) as purchases_count,
-        sum(case when l.status_id = '142' then l.amount end) as revenue
+        sum(case when tab2.status_id = '142' then tab2.amount end) as revenue
     from tab2
     left join
         tab

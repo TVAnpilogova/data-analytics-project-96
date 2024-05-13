@@ -1,71 +1,75 @@
-with tab as(
-select distinct on(s.visitor_id)
-       s.visitor_id, 
-       s.visit_date, 
-       l.created_at, 
-       l.status_id, amount, 
-       lead_id, closing_reason, 
-       medium, 
-       source, 
-       campaign 
-from sessions s 
-left join leads l 
-on s.visitor_id = l.visitor_id
-and s.visit_date <= l.created_at
-where medium != 'organic'
-order by s.visitor_id, visit_date desc
-),
-
-tab2 as (
-select utm_source, 
-       utm_medium, 
-       utm_campaign, 
-       cast(campaign_date as date) as campaign_date,
-       sum(daily_spent) as total_cost
-from vk_ads va
-group by 1,2,3,4
-union
-select utm_source, 
-       utm_medium, 
-       utm_campaign, 
-       cast(campaign_date as date) as campaign_date,
-       sum(daily_spent) as total_cost
+with tab as (
+select
+utm_source,
+utm_medium,
+utm_campaign,
+sum(daily_spent) as total_cost,
+to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
+from vk_ads as va
+where utm_medium <> 'organic'
+group by utm_source, utm_medium, utm_campaign, campaign_date 
+union all
+select
+utm_source,
+utm_medium,
+utm_campaign,
+sum(daily_spent) as total_cost,
+to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
 from ya_ads ya
-group by 1,2,3,4
+where utm_medium <> 'organic'
+group by utm_source, utm_medium, utm_campaign, campaign_date 
 ),
-
-tab3 as(
+tab2 as 
+( 
 select
-source, 
-medium, 
-campaign, 
-cast(visit_date as date) as visit_date,
-count (visitor_id) as visitors_count,
-count (visitor_id) filter(where tab.created_at is not null)as leads_count,
-count (visitor_id) filter(where tab.status_id = 142) as purchases_count,
-sum(amount) filter(where tab.status_id = 142) as revenue
-from tab
-group by source, medium, campaign, visit_date
-)
+row_number() over(partition by s.visitor_id order by visit_date desc) as rn,
+to_char(visit_date, 'YYYY-MM-DD') as visit_date,
+lower(source) as utm_source,
+medium as utm_medium,
+campaign as utm_campaign,
+s.visitor_id,
+lead_id,
+closing_reason,
+status_id,
+to_char(created_at, 'YYYY-MM-DD') as created_at,
+amount
+from sessions s
+left join leads l on s.visitor_id = l.visitor_id and s.visit_date <= l.created_at
+where medium <> 'organic'
+),
+tab3 as 
+(
 select
-to_char(visit_date, 'yyyy-mm-dd') as visit_date,
-tab3.source as utm_source, 
-tab3.medium as utm_medium, 
-tab3.campaign as  utm_campaign,
+rn,
+visit_date,
+count(tab2.visitor_id) as visitors_count, 
+tab2.utm_source, tab2.utm_medium, 
+tab2.utm_campaign,
+count(lead_id) as leads_count, 
+count(case when closing_reason = 'Успешно реализовано' or status_id = '142' then 'one'end) as purchases_count,
+sum(case when status_id = '142' then amount end) as revenue,
+total_cost
+from tab2
+left join tab on tab2.utm_campaign = tab.utm_campaign and tab2.utm_medium = tab.utm_medium and tab2.utm_source = tab.utm_source
+and tab2.visit_date >= tab.campaign_date
+where rn = '1'
+group by rn, visit_date, tab2.utm_source, tab2.utm_medium, tab2.utm_campaign, total_cost)
+select
+visit_date,
 visitors_count,
-total_cost,
-leads_count, 
+tab3.utm_source, 
+tab3.utm_medium, 
+tab3.utm_campaign, 
+total_cost, 
+leads_count,
 purchases_count, 
 revenue
-from tab3
-left join tab2
-on tab3.medium = tab2.utm_medium and 
-tab3.source = tab2.utm_source and 
-tab3.campaign = tab2.utm_campaign and 
-tab3.visit_date = tab2.campaign_date
-where tab3.medium != 'organic'
-order by 9 desc nulls last, 1 asc, visitors_count desc, utm_source asc, utm_medium asc, utm_campaign asc
-limit 15
-;
+from tab3 
+order by revenue desc nulls last,
+visit_date,
+visitors_count desc,
+utm_source,
+utm_medium,
+utm_campaign
 limit 15
 ;

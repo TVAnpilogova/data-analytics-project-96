@@ -1,27 +1,27 @@
-  with tab as (
+  with tab as(
     select
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    sum(daily_spent) as total_cost,
-    to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
-  from vk_ads as va
-  where utm_medium <> 'organic'
-  group by utm_source, utm_medium, utm_campaign, campaign_date 
-  union all
-  select
-    utm_source,
-    utm_medium,
-    utm_campaign,
-    sum(daily_spent) as total_cost,
-    to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
-  from ya_ads ya
-  where utm_medium <> 'organic'
-  group by utm_source, utm_medium, utm_campaign, campaign_date 
-),
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        sum(daily_spent) as total_cost,
+        to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
+    from vk_ads
+    where utm_medium <> 'organic'
+    group by utm_source, utm_medium, utm_campaign, campaign_date 
+    union all
+    select
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        sum(daily_spent) as total_cost,
+        to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
+    from ya_ads
+    where utm_medium <> 'organic'
+    group by utm_source, utm_medium, utm_campaign, campaign_date )
+    ,
 tab2 as 
-( 
-  select
+(
+    select
     row_number() over(partition by s.visitor_id order by visit_date desc) as rn,
     to_char(visit_date, 'YYYY-MM-DD') as visit_date,
     lower(source) as utm_source,

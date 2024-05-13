@@ -6,7 +6,7 @@ with tab as (
         sum(daily_spent) as total_cost,
         to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
     from vk_ads
-    where utm_medium <> 'organic'
+    where utm_medium != 'organic'
     group by utm_source, utm_medium, utm_campaign, campaign_date
     union all
     select
@@ -16,50 +16,50 @@ with tab as (
         sum(daily_spent) as total_cost,
         to_char(campaign_date, 'YYYY-MM-DD') as campaign_date
     from ya_ads
-    where utm_medium <> 'organic'
+    where utm_medium != 'organic'
     group by utm_source, utm_medium, utm_campaign, campaign_date
 )
 ,
 tab2 as (
     select
-        medium as utm_medium,
-        campaign as utm_campaign,
+        s.medium as utm_medium,
+        s.campaign as utm_campaign,
         s.visitor_id,
-        lead_id,
-        closing_reason,
-        status_id,
-        amount,
+        l.lead_id,
+        l.closing_reason,
+        l.status_id,
+        l.amount,
         row_number()
-            over (partition by s.visitor_id order by visit_date desc)
+        over (partition by s.visitor_id order by visit_date desc)
         as rn,
-        to_char(visit_date, 'YYYY-MM-DD') as visit_date,
-        lower(source) as utm_source,
-        to_char(created_at, 'YYYY-MM-DD') as created_at
+        to_char(s.visit_date, 'YYYY-MM-DD') as visit_date,
+        lower(s.source) as utm_source,
+        to_char(l.created_at, 'YYYY-MM-DD') as created_at
     from sessions as s
     left join
         leads as l
         on s.visitor_id = l.visitor_id and s.visit_date <= l.created_at
-    where medium <> 'organic'
+    where s.medium != 'organic'
 ),
 
 tab3 as (
     select
-        rn,
-        visit_date,
+        tab2.rn,
+        tab2.visit_date,
         tab2.utm_source,
         tab2.utm_medium,
         tab2.utm_campaign,
-        total_cost,
+        tab.total_cost,
         count(tab2.visitor_id) as visitors_count,
-        count(lead_id) as leads_count,
+        count(l.lead_id) as leads_count,
         count(
             case
                 when
-                    closing_reason = 'Успешно реализовано' or status_id = '142'
+                    l.closing_reason = 'Успешно реализовано' or l.status_id = '142'
                     then 'one'
             end
         ) as purchases_count,
-        sum(case when status_id = '142' then amount end) as revenue
+        sum(case when l.status_id = '142' then l.amount end) as revenue
     from tab2
     left join
         tab
@@ -68,14 +68,14 @@ tab3 as (
             and tab2.utm_medium = tab.utm_medium
             and tab2.utm_source = tab.utm_source
             and tab2.visit_date >= tab.campaign_date
-    where rn = '1'
+    where tab2.rn = '1'
     group by
-        rn,
-        visit_date,
+        tab2.rn,
+        tab2.visit_date,
         tab2.utm_source,
         tab2.utm_medium,
         tab2.utm_campaign,
-        total_cost
+        tab.total_cost
 )
 
 select

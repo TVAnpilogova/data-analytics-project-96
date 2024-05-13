@@ -10,35 +10,37 @@ with tab as (
         l.amount, --сумма лида (в деньгах)
         l.closing_reason, --причина закрытия
         l.status_id, --код причины закрытия
-        row_number() over (partition by s.visitor_id 
-        order by s.visit_date desc) as number
+        row_number() over (
+            partition by s.visitor_id
+            order by s.visit_date desc
+        ) as number
     from sessions as s
-    join
-        leads as l on
-        s.visitor_id = l.visitor_id
-    WHERE s.source != 'organic' AND s.medium != 'organic'
-    AND s.campaign != 'organic'
-    )
-    select
-    visitor_id, 
+    inner join
+        leads as l
+        on
+            s.visitor_id = l.visitor_id
+    where
+        s.source != 'organic' and s.medium != 'organic'
+        and s.campaign != 'organic'
+)
+
+select
+    visitor_id,
     visit_date,
     utm_source,
     utm_medium,
-    utm_campaign, 
+    utm_campaign,
     lead_id,
-    created_at, 
-    amount, 
-    closing_reason, 
-    status_id 
-  from tab
-  WHERE number = 1
-  order by 
+    created_at,
+    amount,
+    closing_reason,
+    status_id
+from tab
+where number = 1
+order by
     amount desc nulls last,--от большего к меньшему, null записи идут последними
     visit_date asc,--от ранних к поздним
-    utm_source ASC, 
-    utm_medium ASC, 
-    utm_campaign ASC --в алфавитном порядке
-  limit 10
-;
-
-
+    utm_source asc,
+    utm_medium asc,
+    utm_campaign asc --в алфавитном порядке
+limit 10;
